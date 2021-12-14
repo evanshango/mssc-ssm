@@ -3,7 +3,6 @@ package com.codewithevans.msscssm.services;
 import com.codewithevans.msscssm.domain.Payment;
 import com.codewithevans.msscssm.domain.PaymentEvent;
 import com.codewithevans.msscssm.domain.PaymentState;
-import com.codewithevans.msscssm.exceptions.NotFoundException;
 import com.codewithevans.msscssm.repository.PaymentRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.messaging.Message;
@@ -12,6 +11,7 @@ import org.springframework.statemachine.StateMachine;
 import org.springframework.statemachine.config.StateMachineFactory;
 import org.springframework.statemachine.support.DefaultStateMachineContext;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @RequiredArgsConstructor
 @Service
@@ -29,6 +29,7 @@ public class PaymentServiceImpl implements PaymentService {
         return paymentRepository.save(payment);
     }
 
+    @Transactional
     @Override
     public StateMachine<PaymentState, PaymentEvent> preAuth(Long paymentId) {
         StateMachine<PaymentState, PaymentEvent> sm = build(paymentId);
@@ -36,6 +37,7 @@ public class PaymentServiceImpl implements PaymentService {
         return sm;
     }
 
+    @Transactional
     @Override
     public StateMachine<PaymentState, PaymentEvent> authPayment(Long paymentId) {
         StateMachine<PaymentState, PaymentEvent> sm = build(paymentId);
@@ -43,6 +45,7 @@ public class PaymentServiceImpl implements PaymentService {
         return sm;
     }
 
+    @Transactional
     @Override
     public StateMachine<PaymentState, PaymentEvent> declineAuth(Long paymentId) {
         StateMachine<PaymentState, PaymentEvent> sm = build(paymentId);
@@ -58,7 +61,7 @@ public class PaymentServiceImpl implements PaymentService {
     }
 
     private StateMachine<PaymentState, PaymentEvent> build(Long paymentId){
-        var payment = paymentRepository.findById(paymentId).orElseThrow(NotFoundException::new);
+        var payment = paymentRepository.getById(paymentId);
 
         StateMachine<PaymentState, PaymentEvent> sm = factory.getStateMachine(Long.toString(payment.getId()));
 
